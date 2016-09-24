@@ -87,6 +87,10 @@ class Main(QWidget):
         self.setWindowIcon(QIcon('today.ico'))
         self.center()
 
+        self.trayIcon = QSystemTrayIcon()
+        self.trayIcon.setIcon(QIcon('today.ico'))
+        self.trayIcon.activated.connect(self.restoreWindow)
+
         self.resultTable = QTableWidget()
         self.resultTable.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.resultTable.setColumnCount(3)
@@ -140,6 +144,29 @@ class Main(QWidget):
         screen = QDesktopWidget().screenGeometry()
         size =  self.geometry()
         self.move((screen.width()-size.width())/2, (screen.height()-size.height())/2)
+
+    def event(self, event):
+        if (event.type() == QEvent.WindowStateChange and self.isMinimized()):
+            self.setWindowFlags(self.windowFlags() & ~Qt.Tool)
+            self.trayIcon.show()
+            return True
+        else:
+            return super(Main, self).event(event)
+
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, self.tr("提示"), self.tr("确定退出？"), QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            self.trayIcon.show()
+            self.hide()
+            event.ignore()
+
+    def restoreWindow(self, reason):
+        if reason == QSystemTrayIcon.DoubleClick:
+            self.trayIcon.hide()
+            self.showNormal()
 
     def displayData(self, result):
         no = 1
