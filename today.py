@@ -139,6 +139,7 @@ class Main(QWidget):
         self.connect(self.undonePushButton, SIGNAL('clicked()'), self.undoneWork)
         self.connect(self.deletePushButton, SIGNAL('clicked()'), self.deleteWork)
         self.connect(self.updatePushButton, SIGNAL('clicked()'), self.updateWork)
+        self.contentLineEdit.returnPressed.connect(self.addPushButton.click)
 
     def center(self):
         screen = QDesktopWidget().screenGeometry()
