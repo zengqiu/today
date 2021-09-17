@@ -102,7 +102,6 @@ class Main(QWidget):
         self.initPushButton = QPushButton(self.tr("初始化"))
         self.donePushButton = QPushButton(self.tr("已完成"))
         self.undonePushButton = QPushButton(self.tr("未完成"))
-        self.updatePushButton = QPushButton(self.tr("更新选中"))
         self.deletePushButton = QPushButton(self.tr("删除选中"))
 
         settingLayout = QHBoxLayout()
@@ -110,7 +109,6 @@ class Main(QWidget):
         settingLayout.addWidget(self.initPushButton)
         settingLayout.addWidget(self.donePushButton)
         settingLayout.addWidget(self.undonePushButton)
-        settingLayout.addWidget(self.updatePushButton)
         settingLayout.addWidget(self.deletePushButton)
 
         self.contentLineEdit = QLineEdit()
@@ -130,15 +128,14 @@ class Main(QWidget):
         mainLayout.addLayout(settingLayout)
         mainLayout.addLayout(addLayout)
 
-        # if os.path.isfile(DATABASE):
-        #     self.initPushButton.setDisabled(True)
+        if os.path.isfile(DATABASE):
+            self.initPushButton.setDisabled(True)
 
         self.connect(self.initPushButton, SIGNAL('clicked()'), self.initWork)
         self.connect(self.addPushButton, SIGNAL('clicked()'), self.addWork)        
         self.connect(self.donePushButton, SIGNAL('clicked()'), self.doneWork)
         self.connect(self.undonePushButton, SIGNAL('clicked()'), self.undoneWork)
         self.connect(self.deletePushButton, SIGNAL('clicked()'), self.deleteWork)
-        self.connect(self.updatePushButton, SIGNAL('clicked()'), self.updateWork)
         self.contentLineEdit.returnPressed.connect(self.addPushButton.click)
 
     def center(self):
@@ -170,13 +167,28 @@ class Main(QWidget):
             self.showNormal()
 
     def displayData(self, result):
+        if self.resultTable.receivers(SIGNAL("itemChanged(QTableWidgetItem*)")) > 0:
+            self.resultTable.itemChanged.disconnect(self.updateWork)
         no = 1
         self.resultTable.setRowCount(len(result))
         for i, row in enumerate(result):
             for j, value in enumerate(row):
                 if j == 2:
                     value = '已完成' if value else '未完成'
-                self.resultTable.setItem(i, j, QTableWidgetItem(self.tr(str(value))))
+                item = QTableWidgetItem(self.tr(str(value)))
+                
+                if j > 0:
+                    # 设置为不可编辑
+                    item.setFlags(Qt.ItemIsEnabled)
+                if row[2]:
+                    # 添加删除线
+                    font = item.font()
+                    font.setStrikeOut(True)
+                    item.setFont(font)
+                    # 设置字体颜色
+                    item.setTextColor(QColor(190, 190, 190))
+                self.resultTable.setItem(i, j, item)
+        self.resultTable.itemChanged.connect(self.updateWork)
 
     def initWork(self):
         self.initWorkThread = WorkThread([COMMANDS[0]])
@@ -187,6 +199,7 @@ class Main(QWidget):
         if data['status']:
             QMessageBox.information(self, 'Warning', self.tr(data['status']))
         else:
+            self.initPushButton.setDisabled(True)
             self.displayData(data['result'])
             QMessageBox.information(self, self.tr("初始化"), self.tr("初始化完毕！"))
 
@@ -269,20 +282,11 @@ class Main(QWidget):
         else:
             self.displayData(data['result'])
 
-    def updateWork(self):
-        indexes = self.resultTable.selectedIndexes()
-        rows = sorted(set(index.row() for index in indexes))
-
-        if len(rows):
-            data = dict()
-            
-            for row in rows:
-                timestamp = self.resultTable.item(row, 1)
-                content = self.resultTable.item(row, 0)
-                print content
-                print str(content)
-                data[str(timestamp.text())] = str(content.text())
-            
+    def updateWork(self, item):
+        if item.column() == 0:
+            row = item.row()
+            timestamp = self.resultTable.item(row, 1)
+            data = {str(timestamp.text()): str(item.text())}
             self.updateWorkThread = WorkThread([COMMANDS[5], data])
             self.updateWorkThread.finishSignal.connect(self.updateWorkEnd)
             self.updateWorkThread.start()

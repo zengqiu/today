@@ -65,7 +65,7 @@ def insert_table_one(database, table, params, values):
         conn.commit()
         status_code = 0
     except Exception, e:
-        print e
+        # print e
         conn.rollback()
         status_code = 3
         logger.error('Failed to insert value into table %s', table, exc_info=True)
@@ -85,7 +85,7 @@ def update_status_done(database, table, timestamps):
         conn.commit()
         status_code = 0
     except Exception, e:
-        print e
+        # print e
         conn.rollback()
         status_code = 5
         logger.error('Failed to update status to done in table %s', table, exc_info=True)
@@ -105,7 +105,7 @@ def update_status_undone(database, table, timestamps):
         conn.commit()
         status_code = 0
     except Exception, e:
-        print e
+        # print e
         conn.rollback()
         status_code = 5
         logger.error('Failed to update status to undone in table %s', table, exc_info=True)
@@ -125,14 +125,13 @@ def delete_items(database, table, timestamps):
         conn.commit()
         status_code = 0
     except Exception, e:
-        print e
+        # print e
         conn.rollback()
         status_code = 6
         logger.error('Failed to delete items in table %s', table, exc_info=True)
     conn.close()
 
 def update_items(database, table, data):
-    print data
     sqls = list()
     for key, value in data.items():
         sql = "UPDATE %s SET content='%s' WHERE timestamp='%s'" % (table, value, key)
@@ -146,7 +145,7 @@ def update_items(database, table, data):
         conn.commit()
         status_code = 0
     except Exception, e:
-        print e
+        # print e
         conn.rollback()
         status_code = 5
         logger.error('Failed to update items in table %s', table, exc_info=True)
