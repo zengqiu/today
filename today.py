@@ -167,6 +167,7 @@ class Main(QWidget):
             self.showNormal()
 
     def displayData(self, result):
+	    # 防止无线循环
         if self.resultTable.receivers(SIGNAL("itemChanged(QTableWidgetItem*)")) > 0:
             self.resultTable.itemChanged.disconnect(self.updateWork)
         no = 1
@@ -185,7 +186,7 @@ class Main(QWidget):
                     font = item.font()
                     font.setStrikeOut(True)
                     item.setFont(font)
-                    # 设置字体颜色
+                    # 设置文字颜色
                     item.setTextColor(QColor(190, 190, 190))
                 self.resultTable.setItem(i, j, item)
         self.resultTable.itemChanged.connect(self.updateWork)
